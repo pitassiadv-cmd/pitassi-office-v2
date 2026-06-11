@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pitassi Office V2</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --dark:#062B37; --dark2:#073845; --gold:#D6A354; --paper:#E8E6DF;
+      --white:#fff; --gray50:#F8F7F3; --gray100:#ECECEC; --gray200:#D7D7D7;
+      --gray500:#666; --gray900:#1E1E1E; --red:#A63A2D; --redLight:#FADBD8;
+      --green:#1A7A4A; --greenLight:#D5F5E3; --goldLight:#FFF6E6;
+      --blueLight:#DBEAFE; --shadow:0 2px 8px rgba(0,0,0,.10);
+      --shadowLg:0 16px 38px rgba(0,0,0,.18); --r:10px; --rl:16px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--paper);color:var(--gray900);font-size:14px}
+    button,input{font-family:inherit} button{cursor:pointer}
+    .hidden{display:none!important}
+    .login{min-height:100vh;background:linear-gradient(135deg,#031E28,#062B37 55%,#0B4250);display:flex;align-items:center;justify-content:center;padding:24px}
+    .login-box{width:100%;max-width:430px;background:#fff;border-radius:20px;box-shadow:var(--shadowLg);overflow:hidden}
+    .login-head{background:var(--dark);color:white;border-bottom:4px solid var(--gold);padding:28px;text-align:center}
+    .login-head h1{font-size:22px;margin-bottom:6px}.login-head p{font-size:13px;color:rgba(255,255,255,.72);line-height:1.45}
+    .login-body{padding:24px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+    .field label{font-size:11px;text-transform:uppercase;letter-spacing:.45px;font-weight:900;color:var(--gray500)}
+    .field input{border:1px solid var(--gray200);border-radius:var(--r);padding:11px 12px;background:white;outline:none;font-size:14px}
+    .field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,163,84,.18)}
+    .btn{border:0;border-radius:var(--r);padding:10px 14px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    .btn-primary{background:var(--gold);color:var(--dark)}.btn-secondary{background:white;color:var(--dark);border:1px solid var(--gray200)}
+    .btn-danger{background:var(--red);color:white}.btn-small{font-size:12px;padding:7px 10px;border-radius:8px}.btn-full{width:100%}
+    .alert{border-radius:var(--r);padding:10px 12px;margin:10px 0;font-weight:800;font-size:13px;line-height:1.45}
+    .alert-error{background:var(--redLight);color:var(--red)}.alert-info{background:var(--goldLight);color:#6f4c0b;border:1px solid #E7C88B}
+    .app{display:none;min-height:100vh}.app.show{display:block}
+    .header{height:64px;background:var(--dark);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:var(--shadow);position:sticky;top:0;z-index:50}
+    .brand strong{font-size:17px;display:block}.brand span{font-size:11px;color:rgba(255,255,255,.56)}
+    .userbox{display:flex;align-items:center;gap:10px}.usertext{text-align:right}.usertext strong{font-size:13px;display:block}.usertext span{font-size:11px;color:rgba(255,255,255,.58);text-transform:uppercase}
+    .nav{display:flex;gap:4px;background:var(--dark2);border-bottom:3px solid var(--gold);padding:0 24px;overflow:auto;position:sticky;top:64px;z-index:40}
+    .nav button{background:transparent;color:rgba(255,255,255,.60);border:0;padding:13px 16px;font-weight:900;border-bottom:3px solid transparent;margin-bottom:-3px;white-space:nowrap}
+    .nav button.active{color:white;border-bottom-color:var(--gold);background:rgba(255,255,255,.06)}
+    .wrap{padding:20px 24px 28px}.banner{background:#FFF9EC;border:1px solid #E7C88B;color:#5f420b;border-left:5px solid var(--gold);border-radius:12px;padding:11px 13px;margin-bottom:16px;font-weight:800;line-height:1.45}
+    .grid{display:grid;gap:14px}.stats{grid-template-columns:repeat(5,minmax(140px,1fr));margin-bottom:18px}
+    .stat{background:white;border:1px solid var(--gray200);border-radius:var(--rl);padding:16px;box-shadow:var(--shadow)}
+    .stat small{display:block;color:var(--gray500);font-weight:900;text-transform:uppercase;font-size:11px;letter-spacing:.35px;margin-bottom:6px}.stat strong{font-size:26px;color:var(--dark)}
+    .card{background:white;border:1px solid var(--gray200);border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden}
+    .card-head{background:var(--dark2);color:white;border-bottom:3px solid var(--gold);padding:13px 16px;font-weight:900;display:flex;justify-content:space-between;gap:10px;align-items:center}.card-body{padding:16px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.search{min-width:260px;flex:1;max-width:520px;border:1px solid var(--gray200);border-radius:var(--r);padding:10px 12px;background:white}
+    table{width:100%;border-collapse:collapse;font-size:13px}th{background:var(--dark2);color:white;text-align:left;padding:11px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:3px solid var(--gold)}
+    td{padding:10px 12px;border-bottom:1px solid var(--gray100);color:var(--gray500);vertical-align:top}td strong{color:var(--gray900)}tr:hover td{background:var(--gray50)}
+    .badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;white-space:nowrap}.b-green{background:var(--greenLight);color:var(--green)}.b-gold{background:var(--goldLight);color:#8A5C00}.b-red{background:var(--redLight);color:var(--red)}.b-blue{background:var(--blueLight);color:#1D4ED8}.b-gray{background:var(--gray100);color:var(--gray500)}
+    .empty{padding:30px;text-align:center;color:#888}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:center;justify-content:center;padding:20px}.modal-overlay.open{display:flex}
+    .modal{background:white;width:min(1200px,calc(100vw - 32px));max-height:92vh;overflow:auto;border-radius:18px;box-shadow:var(--shadowLg)}.modal-head{background:var(--dark);color:white;border-bottom:3px solid var(--gold);padding:16px 20px;display:flex;justify-content:space-between;gap:10px;align-items:center}.modal-head h2{font-size:17px}.modal-body{padding:18px;background:#F4F1EA}
+    .client-grid{display:grid;grid-template-columns:320px 1fr;gap:16px}.profile{background:white;border:1px solid var(--gray200);border-radius:16px;overflow:hidden;align-self:start}.profile-head{background:linear-gradient(135deg,var(--dark2),#0B4250);color:white;border-bottom:3px solid var(--gold);padding:18px}.profile-head h3{font-size:19px;margin-bottom:6px}.profile-head p{font-size:12px;color:rgba(255,255,255,.70)}.profile-body{padding:14px}
+    .line{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--gray100);padding:8px 0;font-size:12px}.line span{color:#777;font-weight:900;text-transform:uppercase;font-size:10px}.line strong{text-align:right;color:var(--gray900);word-break:break-word}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:1px solid var(--gray200);background:white;border-radius:999px;padding:8px 12px;font-weight:900;color:var(--dark)}.tabs button.active{background:var(--dark2);color:white;border-color:var(--dark2)}
+    .panel{display:none}.panel.active{display:block}.timeline{display:flex;flex-direction:column;gap:10px}.event{background:white;border:1px solid var(--gray200);border-left:4px solid var(--gold);border-radius:12px;padding:12px}.event-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px}.event-title{font-weight:900;color:var(--dark)}.event-meta{font-size:11px;color:#888}.event-text{white-space:pre-wrap;color:var(--gray500);line-height:1.45;font-size:13px}
+    @media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.client-grid{grid-template-columns:1fr}.nav,.wrap,.header{padding-left:12px;padding-right:12px}}@media(max-width:640px){.stats{grid-template-columns:1fr}.usertext{display:none}th,td{font-size:12px;padding:9px}}
+  </style>
+</head>
+<body>
+  <section id="loginWrap" class="login">
+    <div class="login-box">
+      <div class="login-head"><h1>Pitassi Office V2</h1><p>Versão inicial conectada às tabelas reais do Supabase.</p></div>
+      <div class="login-body">
+        <div class="alert alert-info">Modo leitura. Esta versão serve para validar login, permissões, dashboard, clientes e ficha antes de liberar cadastros.</div>
+        <div id="loginError" class="alert alert-error hidden"></div>
+        <form id="loginForm">
+          <div class="field"><label>Email</label><input id="email" type="email" autocomplete="email" required /></div>
+          <div class="field"><label>Senha</label><input id="password" type="password" autocomplete="current-password" required /></div>
+          <button class="btn btn-primary btn-full" type="submit">Entrar</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <main id="app" class="app">
+    <header class="header">
+      <div class="brand"><strong>Pitassi Office V2</strong><span>Supabase como fonte única · leitura segura</span></div>
+      <div class="userbox">
+        <div class="usertext"><strong id="userName">Usuário</strong><span id="userRole">perfil</span></div>
+        <button class="btn btn-secondary btn-small" id="refreshBtn" type="button">Atualizar</button>
+        <button class="btn btn-danger btn-small" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <button data-page="dashboard" class="active">Dashboard</button>
+      <button data-page="clientes">Clientes</button>
+      <button data-page="tarefas">Tarefas</button>
+      <button data-page="agenda">Agenda</button>
+      <button data-page="inss">INSS</button>
+      <button data-page="financeiro">Financeiro</button>
+      <button data-page="mensagens">Mensagens</button>
+    </nav>
+
+    <section class="wrap">
+      <div class="banner">Primeira versão V2, somente de leitura. Não faz cadastros nem edições.</div>
+
+      <div id="page-dashboard" class="page">
+        <div id="dashboardStats" class="grid stats"></div>
+        <div class="card"><div class="card-head">Integridade dos vínculos</div><div class="card-body" id="integridadeBox">Carregando...</div></div>
+      </div>
+
+      <div id="page-clientes" class="page hidden">
+        <div class="toolbar"><input id="clientesSearch" class="search" placeholder="Buscar cliente..." /><button class="btn btn-secondary btn-small" id="reloadClientesBtn" type="button">Recarregar</button></div>
+        <div class="card"><div class="card-head">Clientes</div><div id="clientesTableWrap"></div></div>
+      </div>
+
+      <div id="page-tarefas" class="page hidden"><div class="card"><div class="card-head">Tarefas</div><div id="tarefasTableWrap"></div></div></div>
+      <div id="page-agenda" class="page hidden"><div class="card"><div class="card-head">Agenda</div><div id="agendaTableWrap"></div></div></div>
+      <div id="page-inss" class="page hidden"><div class="card"><div class="card-head">INSS administrativo</div><div id="inssTableWrap"></div></div></div>
+      <div id="page-financeiro" class="page hidden"><div class="card"><div class="card-head">Financeiro</div><div id="financeiroTableWrap"></div></div></div>
+      <div id="page-mensagens" class="page hidden"><div class="card"><div class="card-head">Mensagens padrão</div><div id="mensagensWrap"></div></div></div>
+    </section>
+  </main>
+
+  <div id="clientModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-head"><h2 id="modalTitle">Ficha do cliente</h2><button class="btn btn-secondary btn-small" id="closeModalBtn" type="button">Fechar</button></div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const SUPABASE_URL = 'https://kxrsfegabyjsnywilyoc.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_SqEjirjGIEjc6GxsBu2GvQ_5JY-9LcN';
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    const state = { user:null, profile:null, dashboard:[], integridade:[], clientes:[], tarefas:[], agenda:[], inss:[], financeiro:[], mensagens:[] };
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+    function esc(v){ return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;"); }
+    function fmtDate(v){ if(!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? esc(v) : d.toLocaleDateString('pt-BR'); }
+    function fmtMoney(v){ if(v === null || v === undefined || v === '') return '—'; const n = Number(v); return Number.isNaN(n) ? esc(v) : n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    function badge(t){ const s=String(t||'Sem status'); const l=s.toLowerCase(); let c='b-gray'; if(l.includes('ativo')||l.includes('conclu')||l.includes('pago')||l.includes('receb')) c='b-green'; if(l.includes('pend')||l.includes('aguard')||l.includes('andamento')) c='b-gold'; if(l.includes('atras')||l.includes('negad')||l.includes('indefer')||l.includes('venc')) c='b-red'; if(l.includes('novo')||l.includes('cadastro')||l.includes('aberto')) c='b-blue'; return `<span class="badge ${c}">${esc(s)}</span>`; }
+    function showErr(m){ $('#loginError').textContent=m; $('#loginError').classList.remove('hidden'); }
+    function clearErr(){ $('#loginError').textContent=''; $('#loginError').classList.add('hidden'); }
+    function showApp(){ $('#loginWrap').classList.add('hidden'); $('#app').classList.add('show'); }
+    function showLogin(){ $('#app').classList.remove('show'); $('#loginWrap').classList.remove('hidden'); }
+
+    async function loadProfile(email){
+      const { data, error } = await sb.from('pitassi_usuarios_permissoes').select('*').ilike('email', email).maybeSingle();
+      if(error) throw error;
+      if(!data) throw new Error('Usuário não cadastrado nas permissões.');
+      if(!data.ativo) throw new Error('Usuário inativo.');
+      state.profile = data;
+      $('#userName').textContent = data.nome || email;
+      $('#userRole').textContent = data.perfil || 'usuário';
+    }
+
+    async function requireAuth(){
+      const { data, error } = await sb.auth.getSession();
+      if(error) throw error;
+      if(!data.session?.user){ showLogin(); return false; }
+      state.user = data.session.user;
+      await loadProfile(state.user.email);
+      showApp();
+      return true;
+    }
+
+    async function fetchTable(name, query='*', orderCol=null, asc=true){
+      let q = sb.from(name).select(query);
+      if(orderCol) q = q.order(orderCol, { ascending: asc, nullsFirst:false });
+      const { data, error } = await q;
+      if(error) throw new Error(`${name}: ${error.message}`);
+      return data || [];
+    }
+
+    async function loadAll(){
+      await loadDashboard();
+      await Promise.all([loadClientes(), loadTarefas(), loadAgenda(), loadInss(), loadFinanceiro(), loadMensagens()]);
+    }
+
+    async function loadDashboard(){ state.dashboard = await fetchTable('pitassi_v_dashboard'); state.integridade = await fetchTable('pitassi_v_integridade'); renderDashboard(); }
+    async function loadClientes(){ state.clientes = await fetchTable('pitassi_v_clientes_resumo','*','nome',true); renderClientes(); }
+    async function loadTarefas(){ state.tarefas = await fetchTable('pitassi_tarefas','id,cliente_id,titulo,descricao,tipo,status,prioridade,responsavel,prazo,hora,created_at','prazo',true); renderTarefas(); }
+    async function loadAgenda(){ state.agenda = await fetchTable('pitassi_agenda','id,cliente_id,data_evento,hora,tipo,titulo,local_link,status,responsavel,observacoes,created_at','data_evento',true); renderAgenda(); }
+    async function loadInss(){ state.inss = await fetchTable('pitassi_admin_inss','id,cliente_id,cpf,beneficio,nb,status,der,dib,dcb,pericia_data,ultima_consulta,observacoes,created_at','der',false); renderInss(); }
+    async function loadFinanceiro(){ state.financeiro = await fetchTable('pitassi_financeiro','id,cliente_id,titulo,descricao,tipo,categoria,status,forma_pagamento,valor,vencimento,data_pagamento,created_at','vencimento',true); renderFinanceiro(); }
+    async function loadMensagens(){ state.mensagens = await fetchTable('pitassi_mensagens_padrao','id,titulo,categoria,texto,ativa,created_at','categoria',true); renderMensagens(); }
+
+    function label(ind){ return ({admin_inss:'INSS',agenda:'Agenda',atendimentos:'Atendimentos',cards:'Cards',clientes:'Clientes',documentos:'Documentos',financeiro:'Financeiro',historico:'Histórico',tarefas:'Tarefas',tarefas_pendentes:'Tarefas pendentes'})[ind] || ind; }
+
+    function renderDashboard(){
+      const order=['clientes','atendimentos','tarefas','tarefas_pendentes','agenda','admin_inss','financeiro','documentos','historico','cards'];
+      const lookup=Object.fromEntries(state.dashboard.map(x=>[x.indicador,x.total]));
+      $('#dashboardStats').innerHTML = order.map(k=>`<div class="stat"><small>${esc(label(k))}</small><strong>${esc(lookup[k] ?? 0)}</strong></div>`).join('');
+      $('#integridadeBox').innerHTML = state.integridade.length ? `<table><thead><tr><th>Problema</th><th>Total</th></tr></thead><tbody>${state.integridade.map(r=>`<tr><td><strong>${esc(r.problema)}</strong></td><td>${Number(r.total)===0?badge('0'):badge(String(r.total))}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Sem dados.</div>';
+    }
+
+    function renderClientes(){
+      const term=($('#clientesSearch')?.value||'').toLowerCase().trim();
+      const rows=state.clientes.filter(c=>!term || [c.nome,c.cpf,c.cnpj,c.email,c.whatsapp,c.area,c.status,c.responsavel,c.cidade,c.uf].join(' ').toLowerCase().includes(term));
+      if(!rows.length){ $('#clientesTableWrap').innerHTML='<div class="empty">Nenhum cliente encontrado.</div>'; return; }
+      $('#clientesTableWrap').innerHTML = `<table><thead><tr><th>Cliente</th><th>Área/status</th><th>Contato</th><th>Demandas</th><th>Tarefas</th><th>INSS</th><th></th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.nome||'Sem nome')}</strong><br><small>${esc(c.cpf||c.cnpj||'Sem CPF/CNPJ')}</small></td><td>${esc(c.area||'—')}<br>${badge(c.status)}</td><td>${esc(c.whatsapp||c.telefone||'—')}<br><small>${esc(c.email||'')}</small></td><td>${esc(c.total_demandas||0)}</td><td>${esc(c.tarefas_pendentes||0)} pend. / ${esc(c.total_tarefas||0)} total</td><td>${esc(c.total_admin_inss||0)}</td><td><button class="btn btn-primary btn-small" data-open-client="${esc(c.id)}" type="button">Abrir ficha</button></td></tr>`).join('')}</tbody></table>`;
+      $$('[data-open-client]').forEach(b=>b.addEventListener('click',()=>openClient(b.getAttribute('data-open-client'))));
+    }
+
+    function table(headers, rows){ return `<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(cols=>`<tr>${cols.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
+    function renderTarefas(){ $('#tarefasTableWrap').innerHTML = state.tarefas.length ? table(['Título','Status','Responsável','Prazo','Tipo'], state.tarefas.map(t=>[`<strong>${esc(t.titulo||'Tarefa')}</strong><br><small>${esc(t.descricao||'')}</small>`,badge(t.status),esc(t.responsavel||'—'),fmtDate(t.prazo),esc(t.tipo||'—')])) : '<div class="empty">Nenhuma tarefa.</div>'; }
+    function renderAgenda(){ $('#agendaTableWrap').innerHTML = state.agenda.length ? table(['Data','Hora','Tipo','Título','Responsável'], state.agenda.map(a=>[fmtDate(a.data_evento),esc(a.hora||'—'),esc(a.tipo||'—'),`<strong>${esc(a.titulo||'Compromisso')}</strong><br><small>${esc(a.local_link||'')}</small>`,esc(a.responsavel||'—')])) : '<div class="empty">Nenhum compromisso na fonte migrada. A agenda estava zerada.</div>'; }
+    function renderInss(){ $('#inssTableWrap').innerHTML = state.inss.length ? table(['Benefício','Status','DER','NB','CPF'], state.inss.map(i=>[`<strong>${esc(i.beneficio||'Benefício')}</strong>`,badge(i.status),fmtDate(i.der),esc(i.nb||'—'),esc(i.cpf||'—')])) : '<div class="empty">Nenhum pedido INSS.</div>'; }
+    function renderFinanceiro(){ $('#financeiroTableWrap').innerHTML = state.financeiro.length ? table(['Título','Valor','Status','Vencimento','Forma'], state.financeiro.map(f=>[`<strong>${esc(f.titulo||f.descricao||'Lançamento')}</strong><br><small>${esc(f.categoria||'')}</small>`,fmtMoney(f.valor),badge(f.status),fmtDate(f.vencimento),esc(f.forma_pagamento||'—')])) : '<div class="empty">Nenhum lançamento.</div>'; }
+    function renderMensagens(){ $('#mensagensWrap').innerHTML = state.mensagens.length ? `<div class="card-body">${state.mensagens.map(m=>`<div class="event"><div class="event-top"><div class="event-title">${esc(m.titulo)}</div><div>${badge(m.categoria||'Mensagem')}</div></div><div class="event-text">${esc(m.texto)}</div></div>`).join('')}</div>` : '<div class="empty">Nenhuma mensagem padrão.</div>'; }
+
+    async function fetchByClient(tbl,id,order,asc){
+      let q=sb.from(tbl).select('*').eq('cliente_id',id);
+      if(order) q=q.order(order,{ascending:asc,nullsFirst:false});
+      const {data,error}=await q; if(error) throw new Error(`${tbl}: ${error.message}`); return data||[];
+    }
+    async function fetchTimeline(id){
+      const {data,error}=await sb.from('pitassi_v_timeline_cliente').select('*').eq('cliente_id',id).order('created_at',{ascending:false,nullsFirst:false}).limit(300);
+      if(error) throw new Error('timeline: '+error.message); return data||[];
+    }
+
+    async function openClient(id){
+      const c=state.clientes.find(x=>x.id===id); if(!c) return;
+      $('#modalTitle').textContent=`Ficha — ${c.nome||'Cliente'}`; $('#clientModal').classList.add('open'); $('#modalBody').innerHTML='<div class="empty">Carregando ficha...</div>';
+      try{
+        const [dem,at,t,ag,i,fin,docs,tl]=await Promise.all([
+          fetchByClient('pitassi_demandas_contratos',id,'created_at',false),
+          fetchByClient('pitassi_atendimentos',id,'data_atendimento',false),
+          fetchByClient('pitassi_tarefas',id,'prazo',true),
+          fetchByClient('pitassi_agenda',id,'data_evento',true),
+          fetchByClient('pitassi_admin_inss',id,'der',false),
+          fetchByClient('pitassi_financeiro',id,'vencimento',true),
+          fetchByClient('pitassi_documentos',id,'data_documento',false),
+          fetchTimeline(id)
+        ]);
+        $('#modalBody').innerHTML = `<div class="client-grid"><aside class="profile"><div class="profile-head"><h3>${esc(c.nome||'Sem nome')}</h3><p>${esc(c.area||'Sem área')} · ${esc(c.status||'Sem status')}</p></div><div class="profile-body">${line('CPF/CNPJ',c.cpf||c.cnpj)}${line('WhatsApp',c.whatsapp||c.telefone)}${line('Email',c.email)}${line('Cidade/UF',[c.cidade,c.uf].filter(Boolean).join('/'))}${line('Responsável',c.responsavel)}${line('Demandas',dem.length)}${line('Tarefas',t.length)}${line('INSS',i.length)}${line('Financeiro',fin.length)}</div></aside><section><div class="tabs"><button class="active" data-tab="timeline">Linha do tempo</button><button data-tab="demandas">Demandas</button><button data-tab="atendimentos">Atendimentos</button><button data-tab="tarefas">Tarefas</button><button data-tab="agenda">Agenda</button><button data-tab="inss">INSS</button><button data-tab="financeiro">Financeiro</button><button data-tab="documentos">Documentos</button></div><div id="tab-timeline" class="panel active">${timeline(tl)}</div><div id="tab-demandas" class="panel">${list(dem,'titulo','status')}</div><div id="tab-atendimentos" class="panel">${list(at,'resumo','status')}</div><div id="tab-tarefas" class="panel">${list(t,'titulo','status')}</div><div id="tab-agenda" class="panel">${list(ag,'titulo','data_evento')}</div><div id="tab-inss" class="panel">${list(i,'beneficio','status')}</div><div id="tab-financeiro" class="panel">${list(fin,'titulo','status',true)}</div><div id="tab-documentos" class="panel">${list(docs,'nome','status')}</div></section></div>`;
+        $$('[data-tab]').forEach(b=>b.addEventListener('click',()=>{ $$('[data-tab]').forEach(x=>x.classList.remove('active')); b.classList.add('active'); $$('.panel').forEach(p=>p.classList.remove('active')); $('#tab-'+b.dataset.tab).classList.add('active'); }));
+      }catch(e){ console.error(e); $('#modalBody').innerHTML=`<div class="alert alert-error">Erro ao carregar ficha: ${esc(e.message||e)}</div>`; }
+    }
+
+    function line(a,b){ return `<div class="line"><span>${esc(a)}</span><strong>${esc(b||'—')}</strong></div>`; }
+    function timeline(items){ if(!items.length) return '<div class="empty">Sem linha do tempo.</div>'; return `<div class="timeline">${items.map(x=>`<div class="event"><div class="event-top"><div><div class="event-title">${esc(x.titulo||'Registro')}</div><div class="event-meta">${fmtDate(x.data_evento||x.created_at)} · ${esc(x.tipo||x.origem_tabela||'')}</div></div><div>${badge(x.origem_tabela||x.tipo)}</div></div><div class="event-text">${esc(x.texto||'')}</div></div>`).join('')}</div>`; }
+    function list(items,title,meta,money=false){ if(!items.length) return '<div class="empty">Sem registros.</div>'; return `<div class="timeline">${items.map(x=>`<div class="event"><div class="event-top"><div><div class="event-title">${esc(x[title]||x.descricao||x.tipo||'Registro')}</div><div class="event-meta">${esc(x[meta]||'')}</div></div>${money?`<div>${fmtMoney(x.valor)}</div>`:''}</div><div class="event-text">${esc(x.observacoes||x.descricao||x.resumo||'')}</div></div>`).join('')}</div>`; }
+
+    function switchPage(p){ $$('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p)); $$('.page').forEach(x=>x.classList.add('hidden')); $('#page-'+p).classList.remove('hidden'); }
+    async function boot(){ try{ const ok=await requireAuth(); if(ok) await loadAll(); }catch(e){ console.error(e); showLogin(); showErr(e.message||String(e)); } }
+
+    $('#loginForm').addEventListener('submit',async e=>{ e.preventDefault(); clearErr(); try{ const email=$('#email').value.trim(); const password=$('#password').value; const {data,error}=await sb.auth.signInWithPassword({email,password}); if(error) throw error; state.user=data.user; await loadProfile(email); showApp(); await loadAll(); }catch(err){ console.error(err); showErr(err.message||'Falha no login.'); } });
+    $('#logoutBtn').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
+    $('#refreshBtn').addEventListener('click',loadAll);
+    $('#reloadClientesBtn').addEventListener('click',loadClientes);
+    $('#clientesSearch').addEventListener('input',renderClientes);
+    $('#closeModalBtn').addEventListener('click',()=>$('#clientModal').classList.remove('open'));
+    $('#clientModal').addEventListener('click',e=>{ if(e.target.id==='clientModal') $('#clientModal').classList.remove('open'); });
+    $$('.nav button').forEach(b=>b.addEventListener('click',()=>switchPage(b.dataset.page)));
+    boot();
+  </script>
+</body>
+</html>
